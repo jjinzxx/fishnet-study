@@ -447,6 +447,7 @@ GameObject:
   - component: {fileID: 58658740}
   - component: {fileID: 58658739}
   - component: {fileID: 58658743}
+  - component: {fileID: 58658744}
   m_Layer: 0
   m_Name: NetworkManager
   m_TagString: Untagged
@@ -539,6 +540,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SteamNetworkShutdownController
   _networkManager: {fileID: 58658741}
+--- !u!114 &58658744
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 58658738}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25be0bc5b9ee8574f9eb918d0719933f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SteamLobbyAuthenticator
+  _lobbyManager: {fileID: 1395404587}
 --- !u!1 &82495542
 GameObject:
   m_ObjectHideFlags: 0
