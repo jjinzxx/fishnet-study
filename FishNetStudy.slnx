@@ -1,0 +1,5 @@
+﻿<Solution>
+  <Project Path="Heathen.Steamworks.csproj" />
+  <Project Path="Heathen.Steamworks.Editor.csproj" />
+  <Project Path="Assembly-CSharp.csproj" />
+</Solution>
