@@ -1485,7 +1485,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &432115541
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1503,7 +1503,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
   m_AnchoredPosition: {x: 0, y: 100}
-  m_SizeDelta: {x: 600, y: 32}
+  m_SizeDelta: {x: 800, y: 60}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!114 &432115542
 MonoBehaviour:
@@ -4723,7 +4723,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f314bc6f3466b54da82e29cdd36fe44, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Heathen.Steamworks::HeathenEngineering.SteamworksIntegration.LobbyManager
-  m_Delegates: 0a00000009000000
+  m_Delegates: 0a000000090000000300000006000000
   searchArguments:
     slots: -1
     distance: 1
@@ -4749,13 +4749,37 @@ MonoBehaviour:
       m_Calls: []
   evtEnterSuccess:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1395404590}
+        m_TargetAssemblyTypeName: SteamLobbyMemberController, Assembly-CSharp
+        m_MethodName: RefreshWaitingRoomMembers
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   evtEnterFailed:
     m_PersistentCalls:
       m_Calls: []
   evtCreated:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1395404590}
+        m_TargetAssemblyTypeName: SteamLobbyMemberController, Assembly-CSharp
+        m_MethodName: RefreshWaitingRoomMembers
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   evtCreateFailed:
     m_PersistentCalls:
       m_Calls: []
@@ -4865,6 +4889,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SteamLobbyMemberController
   _lobbyManager: {fileID: 1395404587}
+  _networkManager: {fileID: 58658741}
   _waitingRoomSettingsText: {fileID: 1153846722}
   _waitingMemberListText: {fileID: 82495545}
   _roomStatusText: {fileID: 432115542}
