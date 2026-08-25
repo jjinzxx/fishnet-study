@@ -66,7 +66,7 @@ public sealed class SteamLobbyMemberController : MonoBehaviour
 
         _roomStatusText.gameObject.SetActive(true);
 
-        
+
         // Heathen의 evtCreated는 CreateSteamLobby 완료 콜백보다
         // 먼저 호출되므로 Host 시작 전 이벤트를 등록할 수 있습니다.
         if (lobby.IsOwner &&
@@ -84,9 +84,25 @@ public sealed class SteamLobbyMemberController : MonoBehaviour
                             return;
                         }
 
-                        Debug.Log(
-                            "Host가 FishNet Client 인증을 확인했습니다.\n" +
-                            $"FishNet Client ID: {connection.ClientId}");
+                        string transportAddress = connection.GetAddress();
+
+                        if (ulong.TryParse(
+                            transportAddress,
+                            out ulong steamId64) &&
+                            steamId64 != 0)
+                        {
+                            Debug.Log(
+                                "Host가 FishNet Client 인증과 Steam ID 매핑을 확인했습니다.\n" +
+                                $"FishNet Client ID: {connection.ClientId}\n" +
+                                $"Steam ID64: {steamId64}");
+                        }
+                        else
+                        {
+                            Debug.LogWarning(
+                                "FishNet Client ID에 대응하는 Steam ID64를 확인하지 못했습니다.\n" +
+                                $"FishNet Client ID: {connection.ClientId}\n" +
+                                $"Transport 주소: {transportAddress}");
+                        }
 
                         RefreshWaitingRoomMembers();
                     };
