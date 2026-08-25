@@ -1,9 +1,12 @@
+using System;
+using FishNet.Managing;
+using FishNet.Transporting;
 using HeathenEngineering.SteamworksIntegration;
 using HeathenEngineering.SteamworksIntegration.API;
 using Steamworks;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 public sealed class SteamLobbyBrowserController : MonoBehaviour
 {
@@ -25,6 +28,9 @@ public sealed class SteamLobbyBrowserController : MonoBehaviour
     [Header("Lobby 참가")]
     [SerializeField] private LobbyManager _lobbyManager;
     [SerializeField] private Button _joinRoomButton;
+
+    [Header("FishNet")]
+    [SerializeField] private NetworkManager _networkManager;
 
     [Header("Lobby 대기실")]
     [SerializeField] private GameObject _multiplayerLobbyPanel;
@@ -162,6 +168,7 @@ public sealed class SteamLobbyBrowserController : MonoBehaviour
     public void JoinSelectedSteamLobby()
     {
         if (_lobbyManager == null ||
+            _networkManager == null ||
             _joinRoomButton == null ||
             _refreshButton == null ||
             _multiplayerLobbyPanel == null ||
@@ -184,6 +191,43 @@ public sealed class SteamLobbyBrowserController : MonoBehaviour
         {
             Debug.LogWarning(
                 "Steam 초기화 또는 로그인 상태를 먼저 확인해 주세요.");
+
+            return;
+        }
+
+        if (!_networkManager.Initialized ||
+            _networkManager.TransportManager == null ||
+            _networkManager.TransportManager.Transport == null)
+        {
+            Debug.LogWarning(
+                "FishNet NetworkManager 또는 Transport가 " +
+                "초기화되지 않았습니다.");
+
+            return;
+        }
+
+        Transport transport =
+            _networkManager.TransportManager.Transport;
+
+        if (!(transport is FishySteamworks.FishySteamworks))
+        {
+            Debug.LogWarning(
+                "현재 FishNet Transport가 " +
+                "FishySteamworks가 아닙니다.");
+
+            return;
+        }
+
+        // Guest에서 Server가 실행 중이면 FishySteamworks가
+        // 전달받은 Host 주소 대신 자기 자신에게 연결할 수 있습니다.
+        if (transport.GetConnectionState(true) !=
+                LocalConnectionState.Stopped ||
+            transport.GetConnectionState(false) !=
+                LocalConnectionState.Stopped)
+        {
+            Debug.LogWarning(
+                "FishNet Server 또는 Client 연결이 " +
+                "이미 실행 중입니다.");
 
             return;
         }
@@ -224,7 +268,7 @@ public sealed class SteamLobbyBrowserController : MonoBehaviour
 
         _joinRoomButton.interactable = false;
         _refreshButton.interactable = false;
-        _roomStateText.text = "참가 중";
+        _roomStateText.text = "Steam Lobby 참가 중";
 
         UnityAction<LobbyData> onSuccess = null;
         UnityAction<EChatRoomEnterResponse> onFailed = null;
@@ -232,107 +276,321 @@ public sealed class SteamLobbyBrowserController : MonoBehaviour
         onSuccess =
             joinedLobby =>
             {
-                // 다음 참가 요청에 이전 이벤트가 다시 실행되지 않도록
-                // 이번 요청에 등록한 리스너를 제거합니다.
+                // 이번 Steam Lobby 참가 요청에 사용한 리스너를 제거합니다.
                 _lobbyManager.evtEnterSuccess.RemoveListener(
                     onSuccess);
 
                 _lobbyManager.evtEnterFailed.RemoveListener(
                     onFailed);
 
-                _isJoiningLobby = false;
-
-                _joinRoomButton.interactable = true;
-                _refreshButton.interactable = true;
-
-                // LobbyManager.Join은 성공 이벤트를 발생시키기 전에
-                // LobbyManager.Lobby를 참가한 Lobby로 갱신합니다.
+                // LobbyManager.Join 성공 이벤트가 호출되기 전에
+                // LobbyManager.Lobby가 참가한 Lobby로 갱신됩니다.
                 LobbyData managedLobby =
                     _lobbyManager.Lobby;
 
-                LobbyMemberData[] members =
-                    managedLobby.Members;
+                LobbyMemberData owner =
+                    managedLobby.Owner;
 
-                string memberListText =
-                    string.Empty;
-
-                foreach (LobbyMemberData member in members)
+                if (!managedLobby.IsValid ||
+                    !owner.user.IsValid ||
+                    owner.user.IsMe)
                 {
-                    string memberName =
-                        string.IsNullOrWhiteSpace(member.user.Name)
-                            ? member.user.SteamId.ToString()
-                            : member.user.Name;
-
-                    string roleText =
-                        string.Empty;
-
-                    if (member.IsOwner &&
-                        member.user.IsMe)
+                    if (_lobbyManager.HasLobby)
                     {
-                        roleText = " (방장, 나)";
-                    }
-                    else if (member.IsOwner)
-                    {
-                        roleText = " (방장)";
-                    }
-                    else if (member.user.IsMe)
-                    {
-                        roleText = " (나)";
+                        _lobbyManager.Leave();
                     }
 
-                    if (memberListText.Length > 0)
-                    {
-                        memberListText += "\n";
-                    }
+                    _isJoiningLobby = false;
+                    _joinRoomButton.interactable = true;
+                    _refreshButton.interactable = true;
+                    _roomStateText.text =
+                        "Host 정보를 확인하지 못했습니다.";
 
-                    memberListText +=
-                        $"{memberName}{roleText}";
+                    Debug.LogError(
+                        "FishNet Guest 연결 실패\n" +
+                        "유효한 Lobby Owner Steam ID64를 " +
+                        "확인하지 못했습니다.");
+
+                    return;
+                }
+
+                // Steam Lobby 참가를 기다리는 사이에 다른 코드가
+                // FishNet을 시작하지 않았는지 다시 검사합니다.
+                if (transport.GetConnectionState(true) !=
+                        LocalConnectionState.Stopped ||
+                    transport.GetConnectionState(false) !=
+                        LocalConnectionState.Stopped)
+                {
+                    _lobbyManager.Leave();
+
+                    _isJoiningLobby = false;
+                    _joinRoomButton.interactable = true;
+                    _refreshButton.interactable = true;
+                    _roomStateText.text =
+                        "FishNet 연결 상태를 확인해 주세요.";
+
+                    Debug.LogError(
+                        "Steam Lobby 참가 후 FishNet 연결 상태가 " +
+                        "변경되어 Guest 연결을 시작하지 않았습니다.");
+
+                    return;
                 }
 
                 ulong lobbyId =
                     managedLobby.SteamId.m_SteamID;
 
                 ulong ownerSteamId =
-                    managedLobby.Owner.user.SteamId;
+                    owner.user.SteamId;
 
-                _waitingRoomNameText.text =
-                    managedLobby.Name;
+                bool fishNetAttemptFinished = false;
 
-                _waitingRoomSettingsText.text =
-                    $"Lobby ID64: {lobbyId}\n" +
-                    $"Host ID64: {ownerSteamId}\n" +
-                    $"인원: {managedLobby.MemberCount} / " +
-                    $"{managedLobby.MaxMembers}";
+                Action<ClientConnectionStateArgs>
+                    onClientConnectionState = null;
 
-                _waitingMemberListText.text =
-                    memberListText;
+                Action onAuthenticated = null;
+                Action<string> rollbackFishNetJoin = null;
 
-                _roomStatusText.text =
-                    "Steam Lobby 참가 완료 · FishNet 연결 전";
+                rollbackFishNetJoin =
+                    reason =>
+                    {
+                        if (fishNetAttemptFinished)
+                        {
+                            return;
+                        }
 
-                // 현재 사용자는 Guest이므로
-                // 게임 시작 버튼을 사용할 수 없습니다.
-                _startGameButton.interactable = false;
+                        fishNetAttemptFinished = true;
 
-                _multiplayerLobbyPanel.SetActive(false);
-                _roomWaitingPanel.SetActive(true);
+                        // StopConnection이 상태 이벤트를 다시 발생시키기 전에
+                        // 이번 연결 시도의 이벤트부터 제거합니다.
+                        _networkManager.ClientManager
+                            .OnClientConnectionState -=
+                            onClientConnectionState;
 
-                Debug.Log(
-                    "Steam Lobby 참가 성공\n" +
-                    $"이름: {managedLobby.Name}\n" +
-                    $"Lobby ID64: {lobbyId}\n" +
-                    $"Host ID64: {ownerSteamId}\n" +
-                    $"내 Steam ID64: {UserData.Me.SteamId}\n" +
-                    $"인원: {managedLobby.MemberCount} / " +
-                    $"{managedLobby.MaxMembers}\n" +
-                    $"LobbyManager HasLobby: " +
-                    $"{_lobbyManager.HasLobby}");
+                        _networkManager.ClientManager
+                            .OnAuthenticated -=
+                            onAuthenticated;
+
+                        if (transport.GetConnectionState(false) !=
+                            LocalConnectionState.Stopped)
+                        {
+                            _networkManager.ClientManager.StopConnection();
+                        }
+
+                        // FishNet Client를 정리한 뒤
+                        // Steam Lobby에서도 나갑니다.
+                        if (_lobbyManager.HasLobby)
+                        {
+                            _lobbyManager.Leave();
+                        }
+
+                        _isJoiningLobby = false;
+                        _joinRoomButton.interactable = true;
+                        _refreshButton.interactable = true;
+                        _roomStateText.text =
+                            "FishNet 연결 실패 · 다시 시도해 주세요.";
+
+                        Debug.LogError(
+                            "FishNet Guest 연결 실패\n" +
+                            $"Lobby ID64: {lobbyId}\n" +
+                            $"Host Steam ID64: {ownerSteamId}\n" +
+                            $"원인: {reason}\n" +
+                            $"현재 Lobby 보유 여부: " +
+                            $"{_lobbyManager.HasLobby}");
+                    };
+
+                onClientConnectionState =
+                    args =>
+                    {
+                        if (fishNetAttemptFinished)
+                        {
+                            return;
+                        }
+
+                        if (args.ConnectionState ==
+                            LocalConnectionState.Starting)
+                        {
+                            _roomStateText.text =
+                                "FishNet P2P 연결 중";
+
+                            Debug.Log(
+                                "FishNet Guest 상태 변경\n" +
+                                "State: Starting\n" +
+                                $"Host Steam ID64: {ownerSteamId}");
+
+                            return;
+                        }
+
+                        if (args.ConnectionState ==
+                            LocalConnectionState.Started)
+                        {
+                            // Started는 Steam P2P 연결 완료입니다.
+                            // FishNet 인증 완료는 OnAuthenticated에서 확인합니다.
+                            _roomStateText.text =
+                                "Steam P2P 연결 완료 · FishNet 인증 중";
+
+                            Debug.Log(
+                                "FishNet Guest 상태 변경\n" +
+                                "State: Started\n" +
+                                $"Host Steam ID64: {ownerSteamId}");
+
+                            return;
+                        }
+
+                        if (args.ConnectionState ==
+                            LocalConnectionState.Stopped)
+                        {
+                            rollbackFishNetJoin(
+                                "FishNet 인증 전에 Client 연결이 " +
+                                "Stopped 상태가 되었습니다.");
+                        }
+                    };
+
+                onAuthenticated =
+                    () =>
+                    {
+                        if (fishNetAttemptFinished)
+                        {
+                            return;
+                        }
+
+                        // FishNet 인증 시점에도 Steam Lobby를
+                        // 유지하고 있는지 확인합니다.
+                        if (!_lobbyManager.HasLobby)
+                        {
+                            rollbackFishNetJoin(
+                                "FishNet 인증 전에 Steam Lobby에서 " +
+                                "나가졌습니다.");
+
+                            return;
+                        }
+
+                        fishNetAttemptFinished = true;
+
+                        _networkManager.ClientManager
+                            .OnClientConnectionState -=
+                            onClientConnectionState;
+
+                        _networkManager.ClientManager
+                            .OnAuthenticated -=
+                            onAuthenticated;
+
+                        LobbyMemberData[] members =
+                            managedLobby.Members;
+
+                        string memberListText =
+                            string.Empty;
+
+                        foreach (LobbyMemberData member in members)
+                        {
+                            string memberName =
+                                string.IsNullOrWhiteSpace(member.user.Name)
+                                    ? member.user.SteamId.ToString()
+                                    : member.user.Name;
+
+                            string roleText =
+                                string.Empty;
+
+                            if (member.IsOwner &&
+                                member.user.IsMe)
+                            {
+                                roleText = " (방장, 나)";
+                            }
+                            else if (member.IsOwner)
+                            {
+                                roleText = " (방장)";
+                            }
+                            else if (member.user.IsMe)
+                            {
+                                roleText = " (나)";
+                            }
+
+                            if (memberListText.Length > 0)
+                            {
+                                memberListText += "\n";
+                            }
+
+                            memberListText +=
+                                $"{memberName}{roleText}";
+                        }
+
+                        _waitingRoomNameText.text =
+                            managedLobby.Name;
+
+                        _waitingRoomSettingsText.text =
+                            $"Lobby ID64: {lobbyId}\n" +
+                            $"Host ID64: {ownerSteamId}\n" +
+                            $"인원: {managedLobby.MemberCount} / " +
+                            $"{managedLobby.MaxMembers}";
+
+                        _waitingMemberListText.text =
+                            memberListText;
+
+                        _roomStatusText.text =
+                            "FishNet Guest 연결 및 인증 완료";
+
+                        // Guest는 게임 시작 버튼을 사용할 수 없습니다.
+                        _startGameButton.interactable = false;
+
+                        _isJoiningLobby = false;
+                        _joinRoomButton.interactable = true;
+                        _refreshButton.interactable = true;
+
+                        // FishNet 인증까지 완료된 뒤 대기실로 이동합니다.
+                        _multiplayerLobbyPanel.SetActive(false);
+                        _roomWaitingPanel.SetActive(true);
+
+                        Debug.Log(
+                            "FishNet Guest 연결 및 인증 완료\n" +
+                            $"Lobby ID64: {lobbyId}\n" +
+                            $"Host Steam ID64: {ownerSteamId}\n" +
+                            $"내 Steam ID64: {UserData.Me.SteamId}\n" +
+                            $"FishNet Client ID: " +
+                            $"{_networkManager.ClientManager.Connection.ClientId}\n" +
+                            $"Client State: " +
+                            $"{transport.GetConnectionState(false)}\n" +
+                            $"LobbyManager HasLobby: " +
+                            $"{_lobbyManager.HasLobby}");
+                    };
+
+                // Starting 상태는 StartConnection 호출 안에서
+                // 바로 발생할 수 있으므로 이벤트를 먼저 등록합니다.
+                _networkManager.ClientManager
+                    .OnClientConnectionState +=
+                    onClientConnectionState;
+
+                _networkManager.ClientManager
+                    .OnAuthenticated +=
+                    onAuthenticated;
+
+                _roomStateText.text =
+                    "Host Steam ID로 FishNet 연결 요청 중";
+
+                // 이 overload가 Transport 주소를 설정한 뒤
+                // FishySteamworks Client를 시작합니다.
+                bool clientStartAccepted =
+                    _networkManager.ClientManager.StartConnection(
+                        ownerSteamId.ToString());
+
+                if (!clientStartAccepted)
+                {
+                    rollbackFishNetJoin(
+                        "FishNet Client 시작 요청이 즉시 거부되었습니다.");
+
+                    return;
+                }
+
+                if (!fishNetAttemptFinished)
+                {
+                    Debug.Log(
+                        "FishNet Guest 연결 요청 수락\n" +
+                        $"Lobby ID64: {lobbyId}\n" +
+                        $"Host Steam ID64: {ownerSteamId}");
+                }
             };
 
         onFailed =
             response =>
             {
-                // 실패한 요청의 리스너도 반드시 제거합니다.
                 _lobbyManager.evtEnterSuccess.RemoveListener(
                     onSuccess);
 
@@ -351,8 +609,6 @@ public sealed class SteamLobbyBrowserController : MonoBehaviour
                     $"Response: {response}");
             };
 
-        // LobbyManager.Join에는 콜백 매개변수가 없으므로
-        // 이번 요청의 성공·실패 이벤트를 먼저 등록합니다.
         _lobbyManager.evtEnterSuccess.AddListener(
             onSuccess);
 

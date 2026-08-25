@@ -519,12 +519,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 58658738}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -717.9, y: -304, z: -20}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 875530794}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &58658743
 MonoBehaviour:
@@ -2765,6 +2765,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1395404585}
+  - {fileID: 58658742}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &875784903
@@ -4835,7 +4836,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d386d1246fc2a64bb75b362b465478a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SteamLobbyBrowserController
-  _networkManager: {fileID: 58658741}
   _refreshButton: {fileID: 1192459788}
   _steamRoomItem: {fileID: 1231336082}
   _roomNameText: {fileID: 1143534660}
@@ -4844,6 +4844,7 @@ MonoBehaviour:
   _emptyRoomListText: {fileID: 1986991579}
   _lobbyManager: {fileID: 1395404587}
   _joinRoomButton: {fileID: 847748794}
+  _networkManager: {fileID: 58658741}
   _multiplayerLobbyPanel: {fileID: 1236233972}
   _roomWaitingPanel: {fileID: 317984265}
   _waitingRoomNameText: {fileID: 1365823839}
@@ -7366,5 +7367,4 @@ SceneRoots:
   - {fileID: 1748181991}
   - {fileID: 677106493}
   - {fileID: 875530794}
-  - {fileID: 58658742}
   - {fileID: 1604316085}
