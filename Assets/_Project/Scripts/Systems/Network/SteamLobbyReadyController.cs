@@ -8,6 +8,7 @@ public sealed class SteamLobbyReadyController : NetworkBehaviour
 {
     [Header("Lobby 대기실 UI")]
     [SerializeField] private Button _readyButton;
+    [SerializeField] private Text _readyButtonText;
     [SerializeField] private Button _startGameButton;
 
     private readonly SyncDictionary<int, bool>
@@ -48,6 +49,8 @@ public sealed class SteamLobbyReadyController : NetworkBehaviour
             $"Role: {role}\n" +
             $"StartGameButton: {isHost}\n" +
             $"ReadyButton: {isGuest}");
+
+        RefreshReadyButtonText();
     }
 
     public override void OnSpawnServer(
@@ -141,6 +144,51 @@ public sealed class SteamLobbyReadyController : NetworkBehaviour
             "서버가 Guest 준비 상태를 변경했습니다.\n" +
             $"FishNet Client ID: {clientId}\n" +
             $"Ready: {nextReady}");
+    }
+
+    private void RefreshReadyButtonText()
+    {
+        if (_readyButtonText == null)
+        {
+            Debug.LogWarning(
+                "ReadyButtonText UI 참조가 연결되지 않았습니다.");
+
+            return;
+        }
+
+        // Host에게는 ReadyButton이 표시되지 않지만
+        // 재접속을 고려하여 기본 문구로 초기화합니다.
+        if (!IsClientOnlyInitialized)
+        {
+            _readyButtonText.text =
+                "준비";
+
+            return;
+        }
+
+        NetworkConnection localConnection =
+            ClientManager.Connection;
+
+        if (localConnection == null ||
+            !localConnection.IsActive ||
+            !localConnection.IsAuthenticated)
+        {
+            _readyButtonText.text =
+                "준비";
+
+            return;
+        }
+
+        bool isReady =
+            _guestReadyStates.TryGetValue(
+                localConnection.ClientId,
+                out bool ready) &&
+            ready;
+
+        _readyButtonText.text =
+            isReady
+                ? "준비 취소"
+                : "준비";
     }
 
     public void OnReadyButtonClicked()

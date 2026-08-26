@@ -3684,6 +3684,7 @@ MonoBehaviour:
   _addedNetworkObject: {fileID: 1127423044}
   _networkObjectCache: {fileID: 0}
   _readyButton: {fileID: 1081804460}
+  _readyButtonText: {fileID: 1426477001}
   _startGameButton: {fileID: 2339497}
 --- !u!114 &1127423044
 MonoBehaviour:
