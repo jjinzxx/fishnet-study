@@ -100,4 +100,18 @@ public sealed class SteamLobbyReadyController : NetworkBehaviour
             $"FishNet Client ID: {clientId}\n" +
             $"Ready: {nextReady}");
     }
+
+    public void OnReadyButtonClicked()
+    {
+        if (!IsClientInitialized)
+        {
+            Debug.LogWarning(
+                "준비 요청을 보낼 수 없습니다.\n" +
+                "FishNet 클라이언트가 아직 초기화되지 않았습니다.");
+
+            return;
+        }
+
+        ToggleReadyServerRpc();
+    }
 }
