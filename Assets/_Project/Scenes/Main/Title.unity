@@ -3683,6 +3683,8 @@ MonoBehaviour:
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 1127423044}
   _networkObjectCache: {fileID: 0}
+  _readyButton: {fileID: 1081804460}
+  _startGameButton: {fileID: 2339497}
 --- !u!114 &1127423044
 MonoBehaviour:
   m_ObjectHideFlags: 0

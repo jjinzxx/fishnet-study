@@ -2,11 +2,53 @@ using FishNet.Connection;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using UnityEngine;
+using UnityEngine.UI;
 
 public sealed class SteamLobbyReadyController : NetworkBehaviour
 {
+    [Header("Lobby 대기실 UI")]
+    [SerializeField] private Button _readyButton;
+    [SerializeField] private Button _startGameButton;
+
     private readonly SyncDictionary<int, bool>
         _guestReadyStates = new();
+
+    public override void OnStartClient()
+    {
+        if (_readyButton == null ||
+            _startGameButton == null)
+        {
+            Debug.LogWarning(
+                "준비 상태 버튼 UI 참조가 연결되지 않았습니다.");
+
+            return;
+        }
+
+        bool isHost =
+            IsHostInitialized;
+
+        bool isGuest =
+            IsClientOnlyInitialized;
+
+        _startGameButton.gameObject.SetActive(
+            isHost);
+
+        _readyButton.gameObject.SetActive(
+            isGuest);
+
+        string role =
+            isHost
+                ? "Host"
+                : isGuest
+                    ? "Guest"
+                    : "Unknown";
+
+        Debug.Log(
+            "준비 상태 버튼 표시를 갱신했습니다.\n" +
+            $"Role: {role}\n" +
+            $"StartGameButton: {isHost}\n" +
+            $"ReadyButton: {isGuest}");
+    }
 
     public override void OnSpawnServer(
         NetworkConnection connection)
