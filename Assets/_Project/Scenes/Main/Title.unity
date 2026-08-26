@@ -181,7 +181,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2339498}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1127423043}
+        m_TargetAssemblyTypeName: SteamLobbyReadyController, Assembly-CSharp
+        m_MethodName: OnStartGameButtonClicked
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &2339498
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3683,6 +3695,7 @@ MonoBehaviour:
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 1127423044}
   _networkObjectCache: {fileID: 0}
+  _lobbyManager: {fileID: 1395404587}
   _readyButton: {fileID: 1081804460}
   _readyButtonText: {fileID: 1426477001}
   _startGameButton: {fileID: 2339497}
@@ -5149,7 +5162,6 @@ MonoBehaviour:
   _waitingRoomSettingsText: {fileID: 1153846722}
   _waitingMemberListText: {fileID: 82495545}
   _roomStatusText: {fileID: 432115542}
-  _startGameButton: {fileID: 2339497}
 --- !u!1 &1416282549
 GameObject:
   m_ObjectHideFlags: 0
