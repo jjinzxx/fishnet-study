@@ -18,7 +18,6 @@ public sealed class SteamLobbyMemberController : MonoBehaviour
     [SerializeField] private Text _waitingRoomSettingsText;
     [SerializeField] private Text _waitingMemberListText;
     [SerializeField] private Text _roomStatusText;
-    [SerializeField] private Button _startGameButton;
 
     private bool _fishNetEventsSubscribed;
 
@@ -28,8 +27,7 @@ public sealed class SteamLobbyMemberController : MonoBehaviour
             _networkManager == null ||
             _waitingRoomSettingsText == null ||
             _waitingMemberListText == null ||
-            _roomStatusText == null ||
-            _startGameButton == null)
+            _roomStatusText == null)
         {
             Debug.LogWarning(
                 "Steam Lobby 멤버 UI 참조가 연결되지 않았습니다.");
@@ -271,10 +269,6 @@ public sealed class SteamLobbyMemberController : MonoBehaviour
                     ? "FishNet Guest 연결 및 인증 완료"
                     : "FishNet Guest 연결 및 인증을 기다리는 중입니다.";
         }
-
-        // 인증 인원 확인은 완료했지만 준비 상태와 게임 시작 검증은
-        // 아직 구현하지 않았으므로 버튼은 비활성화합니다.
-        _startGameButton.interactable = false;
 
         string fishNetAuthenticatedText =
             lobby.IsOwner

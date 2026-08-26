@@ -50,7 +50,19 @@ public sealed class SteamLobbyReadyController : NetworkBehaviour
             $"StartGameButton: {isHost}\n" +
             $"ReadyButton: {isGuest}");
 
+        _guestReadyStates.OnChange -=
+            OnGuestReadyStatesChanged;
+
+        _guestReadyStates.OnChange +=
+            OnGuestReadyStatesChanged;
+
         RefreshReadyButtonText();
+    }
+
+    public override void OnStopClient()
+    {
+        _guestReadyStates.OnChange -=
+            OnGuestReadyStatesChanged;
     }
 
     public override void OnSpawnServer(
@@ -92,6 +104,31 @@ public sealed class SteamLobbyReadyController : NetworkBehaviour
             "서버가 Guest 준비 상태를 등록했습니다.\n" +
             $"FishNet Client ID: {clientId}\n" +
             "Ready: False");
+    }
+
+    public override void OnDespawnServer(
+    NetworkConnection connection)
+    {
+        // Host 전체 종료 중에는 서버가 이미 정지했으므로
+        // SyncDictionary를 수정하지 않습니다.
+        if (connection == null ||
+            !IsServerStarted ||
+            connection.IsLocalClient)
+        {
+            return;
+        }
+
+        int clientId =
+            connection.ClientId;
+
+        if (!_guestReadyStates.Remove(clientId))
+        {
+            return;
+        }
+
+        Debug.Log(
+            "서버가 이탈한 Guest 준비 상태를 제거했습니다.\n" +
+            $"FishNet Client ID: {clientId}");
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -144,6 +181,74 @@ public sealed class SteamLobbyReadyController : NetworkBehaviour
             "서버가 Guest 준비 상태를 변경했습니다.\n" +
             $"FishNet Client ID: {clientId}\n" +
             $"Ready: {nextReady}");
+    }
+
+    private void OnGuestReadyStatesChanged(
+    SyncDictionaryOperation operation,
+    int clientId,
+    bool ready,
+    bool asServer)
+    {
+        if (asServer)
+        {
+            if (!IsHostInitialized ||
+                _startGameButton == null)
+            {
+                return;
+            }
+
+            bool canStartGame =
+                _guestReadyStates.Count > 0;
+
+            if (canStartGame)
+            {
+                foreach (bool guestReady in
+                         _guestReadyStates.Values)
+                {
+                    if (!guestReady)
+                    {
+                        canStartGame = false;
+                        break;
+                    }
+                }
+            }
+
+            _startGameButton.interactable =
+                canStartGame;
+
+            return;
+        }
+
+        if (!IsClientOnlyInitialized)
+        {
+            return;
+        }
+
+        NetworkConnection localConnection =
+            LocalConnection;
+
+        if (localConnection == null ||
+            !localConnection.IsActive ||
+            !localConnection.IsAuthenticated)
+        {
+            return;
+        }
+
+        bool localEntryChanged =
+            (operation == SyncDictionaryOperation.Add ||
+             operation == SyncDictionaryOperation.Set ||
+             operation == SyncDictionaryOperation.Remove) &&
+            clientId == localConnection.ClientId;
+
+        bool collectionStateChanged =
+            operation == SyncDictionaryOperation.Clear ||
+            operation == SyncDictionaryOperation.Complete;
+
+        if (localEntryChanged ||
+            collectionStateChanged)
+        {
+            RefreshReadyButtonText();
+        }
     }
 
     private void RefreshReadyButtonText()
