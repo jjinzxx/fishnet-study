@@ -4877,6 +4877,7 @@ GameObject:
   - component: {fileID: 1395404589}
   - component: {fileID: 1395404590}
   - component: {fileID: 1395404591}
+  - component: {fileID: 1395404592}
   m_Layer: 0
   m_Name: SteamLobbyManager
   m_TagString: Untagged
@@ -5118,6 +5119,45 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SteamLobbyInviteController
   _lobbyManager: {fileID: 1395404587}
+--- !u!114 &1395404592
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1395404584}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f820fe673f3d47246905dad17647475b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Heathen.Steamworks::HeathenEngineering.SteamworksIntegration.OverlayManager
+  m_Delegates: 01000000
+  notificationPosition: 3
+  notificationInset: {x: 0, y: 0}
+  evtOverlayActivated:
+    m_PersistentCalls:
+      m_Calls: []
+  evtGameLobbyJoinRequested:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1395404589}
+        m_TargetAssemblyTypeName: SteamLobbyBrowserController, Assembly-CSharp
+        m_MethodName: JoinInvitedSteamLobby
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  evtGameServerChangeRequested:
+    m_PersistentCalls:
+      m_Calls: []
+  evtRichPresenceJoinRequested:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1416282549
 GameObject:
   m_ObjectHideFlags: 0

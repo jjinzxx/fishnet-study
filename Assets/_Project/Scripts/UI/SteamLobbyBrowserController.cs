@@ -42,6 +42,7 @@ public sealed class SteamLobbyBrowserController : MonoBehaviour
     [SerializeField] private Button _startGameButton;
 
     private bool _isJoiningLobby;
+    private bool _isResolvingInvite;
 
     private LobbyData _selectedLobby;
     private bool _isSearching;
@@ -163,6 +164,190 @@ public sealed class SteamLobbyBrowserController : MonoBehaviour
                     $"study_id: " +
                     $"{_selectedLobby[StudyLobbyKey]}");
             });
+    }
+
+    public async void JoinInvitedSteamLobby(
+    LobbyData invitedLobby,
+    UserData inviter)
+    {
+        if (_lobbyManager == null ||
+            _roomStateText == null)
+        {
+            Debug.LogWarning(
+                "Steam 초대 참가에 필요한 참조가 " +
+                "연결되지 않았습니다.");
+
+            return;
+        }
+
+        if (!App.Initialized ||
+            !App.Client.LoggedOn)
+        {
+            Debug.LogWarning(
+                "Steam 초기화 또는 로그인 상태를 " +
+                "먼저 확인해 주세요.");
+
+            return;
+        }
+
+        if (!invitedLobby.IsValid)
+        {
+            Debug.LogWarning(
+                "초대로 전달된 Steam Lobby 정보가 " +
+                "유효하지 않습니다.");
+
+            return;
+        }
+
+        if (_lobbyManager.HasLobby)
+        {
+            Debug.LogWarning(
+                "이미 다른 Steam Lobby에 참가하고 있어 " +
+                "초대 요청을 처리하지 않았습니다.");
+
+            return;
+        }
+
+        if (_isJoiningLobby ||
+            _isResolvingInvite)
+        {
+            Debug.LogWarning(
+                "다른 Steam Lobby 참가 요청을 " +
+                "처리하고 있습니다.");
+
+            return;
+        }
+
+        _isResolvingInvite = true;
+
+        ulong invitedLobbyId =
+            invitedLobby.SteamId.m_SteamID;
+
+        ulong inviterSteamId =
+            inviter.IsValid
+                ? inviter.SteamId
+                : 0;
+
+        bool metadataRequestFinished =
+            false;
+
+        UnityAction<LobbyDataUpdateEventData>
+            onLobbyDataUpdated = null;
+
+        onLobbyDataUpdated =
+            updateData =>
+            {
+                // 다른 Lobby 또는 특정 멤버 정보 갱신은
+                // 이번 초대 Lobby 확인 결과가 아닙니다.
+                if (updateData.lobby != invitedLobby ||
+                    updateData.member.HasValue)
+                {
+                    return;
+                }
+
+                Matchmaking.Client
+                    .EventLobbyDataUpdate
+                    .RemoveListener(
+                        onLobbyDataUpdated);
+
+                metadataRequestFinished = true;
+                _isResolvingInvite = false;
+
+                string studyId =
+                    invitedLobby[StudyLobbyKey];
+
+                // App ID 480을 공유하는 다른 프로젝트의
+                // Lobby 초대를 잘못 처리하지 않도록 검증합니다.
+                if (studyId != StudyLobbyValue)
+                {
+                    _roomStateText.text =
+                        "이 스터디에서 생성한 Lobby가 아닙니다.";
+
+                    Debug.LogWarning(
+                        "Steam Lobby 초대 참가를 거부했습니다.\n" +
+                        $"Lobby ID64: {invitedLobbyId}\n" +
+                        $"study_id: {studyId}");
+
+                    return;
+                }
+
+                _selectedLobby =
+                    invitedLobby;
+
+                _roomStateText.text =
+                    "초대받은 Steam Lobby 참가 중";
+
+                Debug.Log(
+                    "Steam Lobby 초대 수락을 확인했습니다.\n" +
+                    $"Lobby ID64: {invitedLobbyId}\n" +
+                    $"초대한 사용자 Steam ID64: " +
+                    $"{inviterSteamId}\n" +
+                    $"study_id: {studyId}");
+
+                // 검색 결과 참가와 동일한 검증·연결 흐름을 사용합니다.
+                JoinSelectedSteamLobby();
+            };
+
+        Matchmaking.Client
+            .EventLobbyDataUpdate
+            .AddListener(
+                onLobbyDataUpdated);
+
+        bool requestAccepted =
+            invitedLobby.RequestData();
+
+        if (!requestAccepted)
+        {
+            Matchmaking.Client
+                .EventLobbyDataUpdate
+                .RemoveListener(
+                    onLobbyDataUpdated);
+
+            _isResolvingInvite = false;
+
+            _roomStateText.text =
+                "초대 Lobby 정보를 가져오지 못했습니다.";
+
+            Debug.LogWarning(
+                "Steam Lobby 초대 정보 요청이 " +
+                "거부되었습니다.\n" +
+                $"Lobby ID64: {invitedLobbyId}");
+
+            return;
+        }
+
+        _roomStateText.text =
+            "초대 Lobby 정보 확인 중";
+
+        // Steam 응답이 오지 않을 때 이벤트가 계속 남지 않도록
+        // 10초 후 요청 상태를 정리합니다.
+        await Awaitable.WaitForSecondsAsync(
+            10f);
+
+        if (metadataRequestFinished)
+        {
+            return;
+        }
+
+        Matchmaking.Client
+            .EventLobbyDataUpdate
+            .RemoveListener(
+                onLobbyDataUpdated);
+
+        _isResolvingInvite = false;
+
+        if (this == null)
+        {
+            return;
+        }
+
+        _roomStateText.text =
+            "초대 Lobby 정보 확인 시간이 초과되었습니다.";
+
+        Debug.LogWarning(
+            "Steam Lobby 초대 정보 요청 시간이 " +
+            "초과되었습니다.\n" +
+            $"Lobby ID64: {invitedLobbyId}");
     }
 
     public void JoinSelectedSteamLobby()
