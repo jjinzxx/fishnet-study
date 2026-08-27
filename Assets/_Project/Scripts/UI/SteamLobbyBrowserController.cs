@@ -1,6 +1,7 @@
 using System;
 using FishNet.Managing;
 using FishNet.Transporting;
+using HeathenEngineering;
 using HeathenEngineering.SteamworksIntegration;
 using HeathenEngineering.SteamworksIntegration.API;
 using Steamworks;
@@ -164,6 +165,43 @@ public sealed class SteamLobbyBrowserController : MonoBehaviour
                     $"study_id: " +
                     $"{_selectedLobby[StudyLobbyKey]}");
             });
+    }
+
+    public void JoinSteamLobbyFromLaunchArgument()
+    {
+        ulong invitedLobbyId =
+            CommandLine.GetSteamLobbyInvite();
+
+        // 일반 실행에는 +connect_lobby 인수가 없으므로
+        // 자동 참가를 시작하지 않습니다.
+        if (invitedLobbyId == 0)
+        {
+            return;
+        }
+
+        LobbyData invitedLobby =
+            invitedLobbyId;
+
+        if (!invitedLobby.IsValid)
+        {
+            Debug.LogWarning(
+                "실행 인수로 전달된 Steam Lobby ID가 " +
+                "유효하지 않습니다.\n" +
+                $"Lobby ID64: {invitedLobbyId}");
+
+            return;
+        }
+
+        Debug.Log(
+            "게임 시작 인수에서 Steam Lobby 초대를 " +
+            "확인했습니다.\n" +
+            $"실행 인수: +connect_lobby {invitedLobbyId}");
+
+        // 실행 인수에는 초대한 사용자의 정보가 없으므로
+        // inviter에는 기본값을 전달합니다.
+        JoinInvitedSteamLobby(
+            invitedLobby,
+            default);
     }
 
     public async void JoinInvitedSteamLobby(

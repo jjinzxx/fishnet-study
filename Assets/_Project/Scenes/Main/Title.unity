@@ -460,6 +460,7 @@ GameObject:
   - component: {fileID: 58658739}
   - component: {fileID: 58658743}
   - component: {fileID: 58658744}
+  - component: {fileID: 58658745}
   m_Layer: 0
   m_Name: NetworkManager
   m_TagString: Untagged
@@ -565,6 +566,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SteamLobbyAuthenticator
   _lobbyManager: {fileID: 1395404587}
+--- !u!114 &58658745
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 58658738}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aca43cf6f20e77c4f8fcc078fd85081f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FishNet.Runtime::FishNet.Managing.Client.ClientManager
+  _remoteServerTimeout: 2
+  _remoteServerTimeoutDuration: 10
+  _changeFrameRate: 1
+  _frameRate: 500
 --- !u!1 &82495542
 GameObject:
   m_ObjectHideFlags: 0
@@ -4779,7 +4796,19 @@ MonoBehaviour:
   settings: {fileID: 11400000, guid: 7796363651db42a46ad6f6df8aa79588, type: 2}
   evtSteamInitialized:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1395404589}
+        m_TargetAssemblyTypeName: SteamLobbyBrowserController, Assembly-CSharp
+        m_MethodName: JoinSteamLobbyFromLaunchArgument
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   evtSteamInitializationError:
     m_PersistentCalls:
       m_Calls: []
